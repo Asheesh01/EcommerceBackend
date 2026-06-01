@@ -65,9 +65,10 @@ const profile=async(req,res)=>{
             message:"User profile does not exists"
         })
     }
+    const user=await userModel.findById(userId);
     return res.status(200).json({
         success:true,
-        userId,
+        user,
         message:"User profile fteched successfully"
     })
     } catch (error) {
