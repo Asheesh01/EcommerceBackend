@@ -8,8 +8,8 @@ app.use(express.json());
 dotenv.config();
 Connectdb();
 const port = process.env.PORT;
-app.use('/api', userRoutes,productRoutes);
-app.use('/api',)
+app.use('/api',userRoutes)
+app.use('/api',productRoutes);
 app.listen(port, () => {
     console.log(`Server is running in the port ${port}`)
 })

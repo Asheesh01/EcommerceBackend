@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken')
 
 const signupUSer = async (req, res) => {
     try {
-        const { name, email, password } = req.body;
+        const { name, email, password, role } = req.body;
         const isUserExist = await userModel.findOne({ email });
         if (isUserExist) {
             return res.status(400).json({
@@ -15,9 +15,10 @@ const signupUSer = async (req, res) => {
         const user = await userModel.create({
             name,
             email,
-            password: hashedPassword
+            password: hashedPassword,
+            role
         })
-        const token = jwt.sign({ id: user._id }, process.env.SECRETKEY, { expiresIn: '1d' });
+        const token = jwt.sign({ id: user._id, role: user.role }, process.env.SECRETKEY, { expiresIn: '1d' });
 
         return res.status(200).json({
             message: "User created successfully",
@@ -43,7 +44,7 @@ const loginUser = async (req, res) => {
                 message: "User does not exists"
             })
         }
-        const token = jwt.sign({ id: user._id }, process.env.SECRETKEY, { expiresIn: "1d" });
+        const token = jwt.sign({ id: user._id,role:user.role }, process.env.SECRETKEY, { expiresIn: "1d" });
         return res.status(200).json({
             user,
             token
@@ -57,26 +58,26 @@ const loginUser = async (req, res) => {
     }
 }
 
-const profile=async(req,res)=>{
+const profile = async (req, res) => {
     try {
-        const userId=req.user.id;
-    if(!userId){
-        return res.status(401).json({
-            message:"User profile does not exists"
+        const userId = req.user.id;
+        if (!userId) {
+            return res.status(401).json({
+                message: "User profile does not exists"
+            })
+        }
+        const user = await userModel.findById(userId);
+        return res.status(200).json({
+            success: true,
+            user,
+            message: "User profile fteched successfully"
         })
-    }
-    const user=await userModel.findById(userId);
-    return res.status(200).json({
-        success:true,
-        user,
-        message:"User profile fteched successfully"
-    })
     } catch (error) {
         console.log(error);
         res.status(501).json({
-            message:"error comes in fetching the profile"
+            message: "error comes in fetching the profile"
         })
-        
+
     }
 }
 module.exports = {
