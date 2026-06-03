@@ -11,7 +11,7 @@ const addCart = async (req, res) => {
             message: "Product is not availabe"
         })
     }
-    let cart = await cartModel.findById({userId});
+    let cart = await cartModel.findOne({userId});
     if (!cart) {
         cart = await cartModel.create({
             userId,
@@ -57,4 +57,23 @@ const addCart = async (req, res) => {
 
 }
 
-module.exports = addCart
+const viewAllCart=async(req,res)=>{
+try {
+    const userId=req.user.id;
+const cart=await cartModel.findOne({userId}).populate('products.productId');
+return res.status(200).json({
+    message:"Cart fetched successfully",
+    cart
+})
+} catch (error) {
+    console.log(error)
+    return res.status(500).json({
+        message:"cart is not fetched"
+    })
+}
+}
+
+module.exports={
+    addCart,
+    viewAllCart
+}

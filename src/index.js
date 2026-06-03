@@ -3,6 +3,7 @@ const app = express();
 const dotenv = require('dotenv')
 const userRoutes = require('./route/userroute')
 const productRoutes=require('./route/producrRoute')
+const cartRoutes=require('./route/cartRoute')
 const Connectdb = require('./config/db');
 app.use(express.json());
 dotenv.config();
@@ -10,6 +11,7 @@ Connectdb();
 const port = process.env.PORT;
 app.use('/api',userRoutes)
 app.use('/api',productRoutes);
+app.use('/api',cartRoutes)
 app.listen(port, () => {
     console.log(`Server is running in the port ${port}`)
 })
