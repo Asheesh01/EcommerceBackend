@@ -97,7 +97,6 @@ const deleteCart = async (req, res) => {
 const deleteSingleCart = async (req, res) => {
     try {
         const productId = req.params.id;
-        console.log(productId)
         const userId = req.user.id;
         const cart = await cartModel.findOne({ userId });
         if (!cart) {
@@ -105,14 +104,9 @@ const deleteSingleCart = async (req, res) => {
                 message: "Product is not found in the Cart"
             })
         }
-        const originalLength = cart.products.length;
-
         cart.products = cart.products.filter(
             item => item.productId.toString() !== productId
         );
-
-        console.log(originalLength);
-        console.log(cart.products.length);
         await cart.save();
         return res.status(200).json({
             message: "Cart Deleted successfully"

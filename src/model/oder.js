@@ -1,7 +1,7 @@
 const mongoose=require("mongoose")
 
 const orderSchema=new mongoose.Schema({
-    userID:{
+    userId:{
         type:mongoose.Schema.Types.ObjectId,
         ref:'userModel',
         required:true
@@ -9,14 +9,14 @@ const orderSchema=new mongoose.Schema({
     products:[
         {
             productId:{
-                types:mongoose.Schema.Types.ObjectId,
+                type:mongoose.Schema.Types.ObjectId,
                 ref:'productModel',
                 required:true
             },
             quantity:Number
             }
     ],
-    totalAmoun:{
+  price:{
         type:Number,
         required:true
     },
