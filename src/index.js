@@ -5,6 +5,7 @@ const userRoutes = require('./route/userroute')
 const productRoutes=require('./route/producrRoute')
 const cartRoutes=require('./route/cartRoute')
 const oderRoute=require('./route/orderRoute')
+const adminRoute=require('./route/adminRoute')
 const Connectdb = require('./config/db');
 app.use(express.json());
 dotenv.config();
@@ -14,6 +15,8 @@ app.use('/api',userRoutes)
 app.use('/api',productRoutes);
 app.use('/api',cartRoutes)
 app.use('/api',oderRoute)
+app.use('/api',adminRoute)
+
 app.listen(port, () => {
     console.log(`Server is running in the port ${port}`)
 })
