@@ -4,7 +4,8 @@ const productModel = require("../model/product");
 const addCart = async (req, res) => {
     try {
         const userId = req.user.id;
-        const { productId } = req.body;
+        const { productId,quantity } = req.body;
+        console.log("Quantity from request:", quantity);
         const product = await productModel.findById(productId);
         if (!product) {
             return res.status(401).json({
@@ -12,6 +13,11 @@ const addCart = async (req, res) => {
             })
         }
         let cart = await cartModel.findOne({ userId });
+        if(quantity > product.stock){
+            return res.status(200).json({
+                message:"Not enought product"
+            })
+        }
         if (!cart) {
             cart = await cartModel.create({
                 userId,
@@ -19,7 +25,7 @@ const addCart = async (req, res) => {
                 products: [
                     {
                         productId,
-                        quantity: 1
+                        quantity
                     }
                 ]
             })
@@ -29,16 +35,24 @@ const addCart = async (req, res) => {
                 cart, product
             })
         }
-        const existingCart = cart.products.find(
+        const existingProduct = cart.products.find(
             item => item.productId.toString() === productId
         );
-        if (existingCart) {
-            existingCart.quantity += 1;
+        if (existingProduct) {
+            const newQuantity = existingProduct.quantity + quantity;
+
+            if (newQuantity > product.stock) {
+                return res.status(400).json({
+                    message: `Only ${product.stock} items available in stock`
+                });
+            }
+    existingProduct.quantity = newQuantity; // ✅ THIS LINE IS MISSING
+
         }
         else {
             cart.products.push({
                 productId,
-                quantity: 1
+                quantity
             })
         }
         await cart.save();
@@ -97,7 +111,7 @@ const deleteCart = async (req, res) => {
 const deleteSingleCart = async (req, res) => {
     try {
         const productId = req.params.id;
-        const userId = req.user.id;
+    const userId = req.user.id;
         const cart = await cartModel.findOne({ userId });
         if (!cart) {
             return res.status(404).json({
