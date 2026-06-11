@@ -111,10 +111,31 @@ const deleteProduct = async (req, res) => {
     }
 }
 
+const searchProduct=async(req,res)=>{
+   try {
+     const productId=req.params.id;
+    const product=await productModel.findById(productId);
+    if(!product){
+        return res.status(404). json({
+            message:"Product is not found"
+        })
+    }
+    return res.status(200).json({
+        product
+    })
+   } catch (error) {
+    console.log(error)
+     return res.status(501).json({
+            message: "Error comes in searching  the products"
+        })
+   }
+}
+
 module.exports = {
     addProduct,
     getAllproduct,
     updateProduct,
     getProduct,
-    deleteProduct
+    deleteProduct,
+    searchProduct
 }
