@@ -9,7 +9,7 @@
     router.get('/getProduct/:id',getProduct)
     router.put('/updateProduct/:id',authMiddleware,isAdmin,updateProduct)
     router.delete('/deleteProduct/:id',authMiddleware,isAdmin,deleteProduct)
-    router.get('/searchProduct/:id',authMiddleware,isAdmin,searchProduct)
+    router.get('/searchProduct',searchProduct)
 
 
 

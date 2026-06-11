@@ -113,15 +113,22 @@ const deleteProduct = async (req, res) => {
 
 const searchProduct=async(req,res)=>{
    try {
-     const productId=req.params.id;
-    const product=await productModel.findById(productId);
+     const search=req.query.name;
+    const product=await productModel.find({
+name:{
+    $regex:search,
+    $options:'i'
+}
+    });
     if(!product){
         return res.status(404). json({
             message:"Product is not found"
         })
     }
     return res.status(200).json({
+        success:true,
         product
+
     })
    } catch (error) {
     console.log(error)
