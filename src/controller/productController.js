@@ -1,5 +1,6 @@
 const productModel = require('../model/product')
 const userModel = require('../model/user')
+const redis=require('../config/redis')
 const addProduct = async (req, res) => {
     try {
         const { name, description, price, stock, category } = req.body;
@@ -26,7 +27,22 @@ const addProduct = async (req, res) => {
 
 const getAllproduct = async (req, res) => {
     try {
+        const cached=await redis.get('products')
+        if(cached){
+            console.log("Serving from Redis");
+            return res.json({
+                message:"All products fetched", 
+                products:JSON.parse(cached)
+            });
+        }
+        console.log("Serving from mongo db")
         const products = await productModel.find();
+        await redis.set(
+            "products",
+            JSON.stringify(products),
+            "EX",
+            60
+        )
         return res.status(200).json({
             message: "All prducts fetched",
             products

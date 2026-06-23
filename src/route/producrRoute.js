@@ -14,8 +14,4 @@
     router.get('/searchProduct',searchProduct)
     router.get('/getProductinLimit',getProductInLimit)
 
-
-
-
-
     module.exports=router;
