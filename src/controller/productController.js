@@ -1,6 +1,6 @@
 const productModel = require('../model/product')
 const userModel = require('../model/user')
-const redis=require('../config/redis')
+const redis = require('../config/redis')
 const addProduct = async (req, res) => {
     try {
         const { name, description, price, stock, category } = req.body;
@@ -27,12 +27,12 @@ const addProduct = async (req, res) => {
 
 const getAllproduct = async (req, res) => {
     try {
-        const cached=await redis.get('products')
-        if(cached){
+        const cached = await redis.get('products')
+        if (cached) {
             console.log("Serving from Redis");
             return res.json({
-                message:"All products fetched", 
-                products:JSON.parse(cached)
+                message: "All products fetched",
+                products: JSON.parse(cached)
             });
         }
         console.log("Serving from mongo db")
@@ -58,13 +58,26 @@ const getAllproduct = async (req, res) => {
 }
 const getProduct = async (req, res) => {
     try {
-        const producrId = req.params.id;
+         const producrId = req.params.id;
+        const cached = await redis.get(`product:${producrId}`);
+        if (cached) {
+            return res.json({
+                message: "Product fetched successfully",
+                product: JSON.parse(cached)
+            })
+        }
         const product = await productModel.findById(producrId)
         if (!product) {
             return res.status(401).json({
                 message: "Product is not available"
             })
         }
+        await redis.set(
+            `product${producrId}`,
+            JSON.stringify(product),
+            "EX",
+            60
+        )
         return res.status(200).json({
             message: "Product fetched successfully",
             product
@@ -94,6 +107,9 @@ const updateProduct = async (req, res) => {
                 message: "Product not found"
             })
         }
+
+        await redis.del(`products${productId}`);
+        await redis.del("products");
         return res.status(200).json({
             message: "Product update succesfully",
             products
@@ -127,42 +143,42 @@ const deleteProduct = async (req, res) => {
     }
 }
 
-const searchProduct=async(req,res)=>{
-   try {
-     const search=req.query.name;
-    const product=await productModel.find({
-name:{
-    $regex:search,
-    $options:'i'
-}
-    });
-    if(!product){
-        return res.status(404). json({
-            message:"Product is not found"
-        })
-    }
-    return res.status(200).json({
-        success:true,
-        product
+const searchProduct = async (req, res) => {
+    try {
+        const search = req.query.name;
+        const product = await productModel.find({
+            name: {
+                $regex: search,
+                $options: 'i'
+            }
+        });
+        if (!product) {
+            return res.status(404).json({
+                message: "Product is not found"
+            })
+        }
+        return res.status(200).json({
+            success: true,
+            product
 
-    })
-   } catch (error) {
-    console.log(error)
-     return res.status(501).json({
+        })
+    } catch (error) {
+        console.log(error)
+        return res.status(501).json({
             message: "Error comes in searching  the products"
         })
-   }
+    }
 }
 
-getProductInLimit=async(req,res)=>{
+getProductInLimit = async (req, res) => {
     try {
-        const page=Number(req.query.page)||1;
-        const limit=Number(req.query.limit)||5;
-        const skip=(page-1)*limit;
+        const page = Number(req.query.page) || 1;
+        const limit = Number(req.query.limit) || 5;
+        const skip = (page - 1) * limit;
 
-        const products=await productModel.find().
-        skip(skip).
-        limit(limit);
+        const products = await productModel.find().
+            skip(skip).
+            limit(limit);
         return res.status(200).json({
             success: true,
             page,
@@ -172,7 +188,7 @@ getProductInLimit=async(req,res)=>{
         })
 
     } catch (error) {
-         console.log(error);
+        console.log(error);
 
         return res.status(500).json({
             message: "Products not fetched"
