@@ -11,7 +11,7 @@ const addProduct = async (req, res) => {
             stock,
             category
         })
-
+await redis.del("products");
         return res.status(201).json({
             success: true,
             message: "Product add successfully",
@@ -58,22 +58,22 @@ const getAllproduct = async (req, res) => {
 }
 const getProduct = async (req, res) => {
     try {
-         const producrId = req.params.id;
-        const cached = await redis.get(`product:${producrId}`);
+         const productId = req.params.id;
+        const cached = await redis.get(`product:${productId}`);
         if (cached) {
             return res.json({
                 message: "Product fetched successfully",
                 product: JSON.parse(cached)
             })
         }
-        const product = await productModel.findById(producrId)
+        const product = await productModel.findById(productId)
         if (!product) {
             return res.status(401).json({
                 message: "Product is not available"
             })
         }
         await redis.set(
-            `product${producrId}`,
+            `product:${productId}`,
             JSON.stringify(product),
             "EX",
             60
@@ -101,14 +101,14 @@ const updateProduct = async (req, res) => {
                 price,
                 stock,
                 category
-            })
+            },{new:true})
         if (!products) {
             return res.status(401).json({
                 message: "Product not found"
             })
         }
 
-        await redis.del(`products${productId}`);
+        await redis.del(`product:${productId}`);
         await redis.del("products");
         return res.status(200).json({
             message: "Product update succesfully",
@@ -131,6 +131,8 @@ const deleteProduct = async (req, res) => {
                 message: "Product is not found"
             })
         }
+        await redis.del(`product:${productId}`)
+        await redis.del("products")
         return res.status(200).json({
             message: "Product deleted successfully"
         })
@@ -146,17 +148,31 @@ const deleteProduct = async (req, res) => {
 const searchProduct = async (req, res) => {
     try {
         const search = req.query.name;
+        const cacheKey = `search:${search}`;
+        const cached = await redis.get(cacheKey);
+        if(cached){
+            return res.status(200).json({
+                message:"data search from cached",
+                product:JSON.parse(cached)
+            })
+        }
         const product = await productModel.find({
             name: {
                 $regex: search,
                 $options: 'i'
             }
         });
-        if (!product) {
-            return res.status(404).json({
-                message: "Product is not found"
-            })
-        }
+        if (product.length === 0) {
+    return res.status(404).json({
+        message: "Product not found"
+    });
+}
+        await redis.set(
+            cacheKey,
+            JSON.stringify(product),
+            "EX",
+            60
+        )
         return res.status(200).json({
             success: true,
             product
