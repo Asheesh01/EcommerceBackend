@@ -1,16 +1,34 @@
 const productModel = require('../model/product')
 const userModel = require('../model/user')
 const redis = require('../config/redis')
+const uploadOnCloudinary = require('../config/cloudinary')
 const addProduct = async (req, res) => {
     try {
         const { name, description, price, stock, category } = req.body;
+        if (!req.file) {
+            return res.status(400).json({
+                success: false,
+                message: "Please upload the file first"
+            })
+        }
+        const cloudinaryresponse = await uploadOnCloudinary(req.file.path);
+        if (!cloudinaryresponse) {
+            return res.status(500).json({
+                success: false,
+                message: "Image upload failed"
+            });
+        }
+        console.log(req.body);
+        console.log(req.file);
         const adddingproduct = await productModel.create({
             name,
             description,
             price,
             stock,
-            category
+            category,
+            image: cloudinaryresponse.secure_url
         })
+
         await redis.del("products");
         return res.status(201).json({
             success: true,
@@ -31,7 +49,7 @@ const getAllproduct = async (req, res) => {
         if (cached) {
             console.log("Serving from Redis");
             return res.json({
-                message: "All products fetched",
+                message: "Serving from redis",
                 products: JSON.parse(cached)
             });
         }
