@@ -11,7 +11,7 @@ const addProduct = async (req, res) => {
             stock,
             category
         })
-await redis.del("products");
+        await redis.del("products");
         return res.status(201).json({
             success: true,
             message: "Product add successfully",
@@ -58,7 +58,7 @@ const getAllproduct = async (req, res) => {
 }
 const getProduct = async (req, res) => {
     try {
-         const productId = req.params.id;
+        const productId = req.params.id;
         const cached = await redis.get(`product:${productId}`);
         if (cached) {
             return res.json({
@@ -101,7 +101,7 @@ const updateProduct = async (req, res) => {
                 price,
                 stock,
                 category
-            },{new:true})
+            }, { new: true })
         if (!products) {
             return res.status(401).json({
                 message: "Product not found"
@@ -150,10 +150,10 @@ const searchProduct = async (req, res) => {
         const search = req.query.name;
         const cacheKey = `search:${search}`;
         const cached = await redis.get(cacheKey);
-        if(cached){
+        if (cached) {
             return res.status(200).json({
-                message:"data search from cached",
-                product:JSON.parse(cached)
+                message: "data search from cached",
+                product: JSON.parse(cached)
             })
         }
         const product = await productModel.find({
@@ -163,10 +163,10 @@ const searchProduct = async (req, res) => {
             }
         });
         if (product.length === 0) {
-    return res.status(404).json({
-        message: "Product not found"
-    });
-}
+            return res.status(404).json({
+                message: "Product not found"
+            });
+        }
         await redis.set(
             cacheKey,
             JSON.stringify(product),

@@ -62,6 +62,7 @@ const addCart = async (req, res) => {
                 success: true,
                 cart
             })
+            await redis.del(`cart:${userId}`)
     } catch (error) {
         console.log(error)
         return res.status(500).json({
@@ -74,7 +75,21 @@ const addCart = async (req, res) => {
 const viewAllCart = async (req, res) => {
     try {
         const userId = req.user.id;
+        const cachekey=`cart:${userId}`;
+        const cached=await redis.get(cachekey);
+        if(cached){
+            return res.json({
+                message: "fetched from the redis",
+                cart:JSON.parse(cached)
+            })
+        }
         const cart = await cartModel.findOne({ userId }).populate('products.productId');
+        await redis.set(
+            cachekey,
+            JSON.stringify(cart),
+            "EX",
+            60
+        )
         return res.status(200).json({
             message: "Cart fetched successfully",
             cart
@@ -125,6 +140,7 @@ const deleteSingleCart = async (req, res) => {
         return res.status(200).json({
             message: "Cart Deleted successfully"
         })
+        await redis.del(`cart:${userId}`)
     } catch (error) {
         console.log(error)
         return res.status(501).json({

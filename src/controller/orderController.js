@@ -2,7 +2,7 @@ const cartModel = require('../model/cart');
 const orderModel = require('../model/oder');
 const productModel = require('../model/product');
 const userModel = require('../model/user');
-
+const redis=require('../config/redis')
 const createOrder = async (req, res) => {
     try {
         const userId = req.user.id;
@@ -48,12 +48,15 @@ const createOrder = async (req, res) => {
             price: totalPrice,
             status: "PLACED"
         })
+        await user.save();
+         await redis.del(`orders:${userId}`);
         cart.products = [];
         await cart.save()
         return res.status(200).json({
             message: "Oder placed successfully",
             order
         })
+       
     } catch (error) {
         console.log(error)
         return res.status(500).json({
@@ -66,12 +69,27 @@ const createOrder = async (req, res) => {
 const ViewAllOder = async (req, res) => {
     try {
         const userId = req.user.id;
+        const cachkey=`orders:${userId}`;
+        const cached=await redis.get(cachkey);
+        if(cached){
+            console.log("Serving from redis")
+            return res.status(200).json({
+                message:"Orders fetched successfully",
+                orders:JSON.parse(cached)
+            
+            })
+        }
         const orders = await orderModel.find({ userId });
-        if (!orders) {
+        if (orders.length===0) {
             return res.status(401).json({
                 message: "There is no order available"
             })
         }
+       await redis.set(
+            cachkey,
+            JSON.stringify(orders),
+            "EX",
+            60        )
         return res.status(200).json({
             orders,
             message: "Order fetched successfully"
@@ -95,12 +113,13 @@ const cancelOrder = async (req, res) => {
         }
         order.status = "CANCELLED";
         await order.save();
+        await redis.del(`orders:${userId}`);
+
         return res.status(200).json({
             success: true,
             message: "Order cancelled successfully",
             order
         });
-
     } catch (error) {
         console.log(error);
         return res.status(500).json({
